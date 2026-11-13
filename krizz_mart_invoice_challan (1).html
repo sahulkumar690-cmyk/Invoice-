@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Krizz Mart | Tax Invoice & Challan</title>
+<!-- Google Fonts: Poppins -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+<!-- SheetJS for Excel handling -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+<style>
+:root {
+  --ink: #0f172a;
+  --border: #334155;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --bg-subtle: #f8fafc;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #f1f5f9;
+  font-family: 'Poppins', sans-serif;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.container {
+  max-width: 960px;
+  margin: 20px auto;
+  padding: 20px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.top-bar {
+  background: #ffffff;
+  padding: 12px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.top-bar-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #fff;
+  color: #334155;
+  font-size: 11px;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+
+.btn:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  transform: translateY(-1px);
+}
+
+.btn.primary {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary-hover);
+}
+.btn.primary:hover { background: var(--primary-hover); }
+
+.btn.excel {
+  background: #16a34a;
+  color: #fff;
+  border-color: #15803d;
+}
+.btn.excel:hover { background: #15803d; }
+
+.btn.save {
+  background: #0f172a;
+  color: #fff;
+  border-color: #0f172a;
+}
+.btn.save:hover { background: #1e293b; }
+
+.invoice-box {
+  border: 1.5px solid #1e293b;
+  padding: 20px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.doc-title-input {
+  text-align: center;
+  font-weight: 700;
+  font-size: 18px;
+  margin-bottom: 15px;
+  border: 0;
+  border-bottom: 2px solid #1e293b;
+  padding-bottom: 6px;
+  width: 100%;
+  display: block;
+  text-transform: uppercase;
+  color: #0f172a;
+  letter-spacing: 0.5px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.header-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  border-bottom: 1.5px solid #cbd5e1;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+}
+
+.company-title {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  color: #0f172a;
+}
+
+.section-title {
+  font-weight: 700;
+  margin-bottom: 6px;
+  text-decoration: none;
+  border-bottom: 1.5px solid #e2e8f0;
+  padding-bottom: 3px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #1e293b;
+  font-size: 12px;
+}
+
+.meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+  gap: 8px;
+}
+.meta-row span:first-child {
+  font-weight: 600;
+  white-space: nowrap;
+  color: #475569;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+
+th, td {
+  border: 1px solid #cbd5e1;
+  padding: 6px 8px;
+  text-align: left;
+  vertical-align: middle;
+  font-size: 11px;
+}
+
+th {
+  background: #f8fafc;
+  font-weight: 700;
+  text-align: center;
+  color: #1e293b;
+}
+
+td.num, th.num { text-align: right; }
+td.center, th.center { text-align: center; }
+
+/* Editable inputs & textareas */
+input, select, textarea {
+  font: inherit;
+  color: inherit;
+  border: 1px dashed #94a3b8;
+  background: #f8fafc;
+  width: 100%;
+  padding: 4px 6px;
+  margin: 0;
+  border-radius: 4px;
+  font-family: 'Poppins', sans-serif;
+  transition: all 0.15s ease;
+}
+
+textarea {
+  resize: vertical;
+  min-height: 60px;
+  line-height: 1.4;
+}
+
+input:focus, select:focus, textarea:focus {
+  border: 1px solid var(--primary);
+  background: #fff;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+}
+
+.inline-gst {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+.inline-gst strong {
+  white-space: nowrap;
+  font-weight: 600;
+  color: #475569;
+}
+
+.words-box {
+  border-top: 1.5px solid #1e293b;
+  border-bottom: 1.5px solid #1e293b;
+  padding: 8px 10px;
+  margin: 12px 0;
+  font-weight: 600;
+  background: #f8fafc;
+  border-radius: 4px;
+}
+
+.declaration {
+  font-size: 10.5px;
+  margin-top: 10px;
+  line-height: 1.4;
+  color: #334155;
+}
+.declaration textarea {
+  min-height: 65px;
+  font-size: 10.5px;
+  background: #fafafa;
+}
+
+.footer-sign {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 30px;
+  align-items: flex-end;
+}
+
+.sign-box {
+  text-align: center;
+  width: 250px;
+  border-top: 1.5px solid #1e293b;
+  padding-top: 6px;
+}
+
+.copy-btn {
+  font-family: 'Poppins', sans-serif;
+  font-size: 10px;
+  padding: 2px 8px;
+  border: 1px solid #cbd5e1;
+  background: #f1f5f9;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  text-decoration: none;
+  color: #334155;
+  transition: background 0.2s;
+}
+.copy-btn:hover { background: #e2e8f0; }
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; }
+  .container { max-width: none; padding: 0; margin: 0; box-shadow: none; border-radius: 0; }
+  .invoice-box { border: 0; padding: 0; border-radius: 0; }
+  input, select, textarea { border: 0 !important; background: transparent !important; padding: 0 !important; resize: none !important; appearance: none; -webkit-appearance: none; box-shadow: none !important; }
+  .doc-title-input { border-bottom: 1.5px solid #000 !important; padding-bottom: 4px !important; }
+  th { background: #f1f5f9 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .words-box { background: #f8fafc !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; border-top: 1px solid #000; border-bottom: 1px solid #000; }
+}
+</style>
+</head>
+<body>
+
+<div class="top-bar no-print">
+  <div class="top-bar-title">
+    <span>Krizz Mart Invoice &amp; Challan Generator</span>
+    <span style="font-size:11px;color:#64748b;font-weight:400">(Fully Editable &bull; Borders hide automatically on Print)</span>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn" onclick="resetForm()">New / Reset</button>
+    <button class="btn save" onclick="saveDraft()">Save Draft</button>
+    <button class="btn excel" onclick="document.getElementById('excelFile').click()">Import Excel (.xlsx/.csv)</button>
+    <button class="btn" onclick="exportExcel()">Export Excel</button>
+    <button class="btn primary" onclick="window.print()">Print / Save PDF</button>
+  </div>
+</div>
+
+<div class="container">
+ <div class="invoice-box">
+  <!-- Editable Document Title -->
+  <input id="docTitle" class="doc-title-input" value="Tax Invoice" title="Click to edit document title">
+
+  <!-- Seller & Invoice Metadata -->
+  <div class="header-grid">
+   <div>
+    <div class="section-title"><span>Seller / Bill From:</span></div>
+    <input id="sellerName" class="company-title" value="Krizz Mart Private Limited" style="margin-bottom:6px">
+    <textarea id="sellerAddress" rows="4">PLOT-603/B, PHASE-3R GIDC
+UMBERGOAN DIST-VALSAD
+UMBERGOAN - 396171
+Gujarat (24), India</textarea>
+    <div class="inline-gst">
+     <strong>GSTIN:</strong>
+     <input id="sellerGST" value="24AALCK1492Q1ZW" style="font-weight:600">
+    </div>
+   </div>
+   <div>
+    <div class="meta-row"><span>Invoice / Challan No:</span> <input id="docNo" value="SI/26-27/0369" style="font-weight:600"></div>
+    <div class="meta-row"><span>Date:</span> <input id="docDate" value="06-Nov-2026" style="font-weight:600"></div>
+    <div class="meta-row"><span>Order / PO No:</span> <input id="orderNo" value="MYNTRA SJIT HARYANA LOT 8"></div>
+    <div class="meta-row"><span>Order Date:</span> <input id="orderDate" value="06-Nov-2026"></div>
+    <div class="meta-row"><span>Portal:</span> <input id="portal" value="CUSTOM"></div>
+    <div class="meta-row"><span>Payment Mode:</span> <input id="payment" value="COD"></div>
+    <div class="meta-row"><span>Dispatch Through:</span> <input id="dispatch" value="-"></div>
+    <div class="meta-row"><span>AWB / LR No:</span> <input id="awb" value="-"></div>
+    <div class="meta-row"><span>Place of Supply:</span> <input id="pos" value="Haryana (06)"></div>
+   </div>
+  </div>
+
+  <!-- Editable Bill To & Ship To -->
+  <div class="header-grid">
+   <div>
+    <div class="section-title">
+     <span>Bill To:</span>
+     <button type="button" class="copy-btn no-print" onclick="copyBillToShip()" title="Copy Bill To details to Ship To">Copy to Ship To &rarr;</button>
+    </div>
+    <input id="billName" style="font-weight:700;margin-bottom:6px" value="KRIZZ MART PRIVATE LIMITED">
+    <textarea id="billAddress" rows="4">Booth No 1772, SHOP NO. 110A,
+VARDHAMAN MALL, SECTOR 19,
+Faridabad, Faridabad, Haryana, 121002,
+Faridabad-121002 Haryana (06), India</textarea>
+    <div class="inline-gst">
+     <strong>GSTIN:</strong>
+     <input id="billGST" value="06AALCK1492Q1ZU" style="font-weight:600">
+    </div>
+   </div>
+   <div>
+    <div class="section-title">
+     <span>Ship To:</span>
+     <button type="button" class="copy-btn no-print" onclick="copyShipToBill()" title="Copy Ship To details to Bill To">&larr; Copy to Bill To</button>
+    </div>
+    <input id="shipRef" style="font-weight:600;margin-bottom:4px;font-size:11px;color:#475569" value="MYNTRA SJIT HARYANA LOT 8" placeholder="Consignee / Reference">
+    <input id="shipName" style="font-weight:700;margin-bottom:6px" value="KRIZZ MART PRIVATE LIMITED">
+    <textarea id="shipAddress" rows="4">Khasra No.14//6,7,13,14,15,17,18,23,24,25
+16//1,2,9,10,11, 12/1,17//3,4,5,6,7,8,11/2,12,13,14,15
+Village Binola, Tehsil Manesar, Gurgaon, Haryana,
+Binola-122413 Haryana (06), India</textarea>
+    <div class="inline-gst">
+     <strong>GSTIN:</strong>
+     <input id="shipGST" value="06AALCK1492Q1ZU" style="font-weight:600">
+    </div>
+   </div>
+  </div>
+
+  <!-- Product Table -->
+  <table>
+   <thead>
+    <tr>
+     <th style="width:40px">Sr No.</th>
+     <th>Product Name | Product Code / SKU</th>
+     <th style="width:80px" class="center">HSN Code</th>
+     <th style="width:55px" class="center">Qty</th>
+     <th style="width:80px" class="num">Rate</th>
+     <th style="width:95px" class="num">Taxable Value</th>
+     <th style="width:60px" class="center">GST %</th>
+     <th style="width:90px" class="center">IGST (INR)</th>
+     <th style="width:100px" class="num">Amount (INR)</th>
+     <th class="no-print" style="width:35px">Act</th>
+    </tr>
+   </thead>
+   <tbody id="itemBody">
+   </tbody>
+   <tfoot>
+    <tr style="font-weight:700;background:#f8fafc">
+     <td colspan="3" style="text-align:right">Total:</td>
+     <td class="center" id="totalQty">0</td>
+     <td></td>
+     <td class="num" id="taxableTotal">0.00</td>
+     <td></td>
+     <td class="center" id="igstTotal">0.00</td>
+     <td class="num" id="grandTotal">0.00</td>
+     <td class="no-print"></td>
+    </tr>
+   </tfoot>
+  </table>
+
+  <div class="no-print" style="margin-bottom:14px;display:flex;gap:10px;align-items:center">
+   <button class="btn primary" onclick="addRow()">+ Add Item Row</button>
+   <button class="btn" onclick="clearRows()">Clear All Rows</button>
+   <span id="statusMsg" style="font-family:'Poppins',sans-serif;font-size:11px;color:#16a34a;font-weight:600"></span>
+  </div>
+
+  <div class="words-box">
+   Amount Chargeable (in words):<br>
+   <span id="amountWords" style="font-weight:700;color:#1e293b">Zero Rupees Only</span>
+  </div>
+
+  <div style="font-size:11px;margin-bottom:8px;display:flex;align-items:center;gap:8px">
+   <strong style="color:#475569">Tax is payable on reverse charge basis:</strong>
+   <select id="reverseCharge" style="width:75px;font-weight:600">
+    <option value="No">No</option>
+    <option value="Yes">Yes</option>
+   </select>
+  </div>
+
+  <div class="declaration">
+   <strong style="color:#1e293b">Declaration</strong><br>
+   <textarea id="declarationText" rows="4">1. This is a computer generated Invoice. Doesn't require signature or stamp.
+2. All figures are showing in INR.
+3. Ship/Handling Charges inclusive of GST.
+4. All Disputes are subject to Gujarat (24) jurisdiction only.</textarea>
+  </div>
+
+  <div class="footer-sign">
+   <div style="font-size:10.5px;width:45%;color:#475569">
+    E. &amp; O.E<br><br>
+    <input id="footerNote" value="Powered By unicommerce" style="font-size:10.5px;font-weight:500">
+   </div>
+   <div class="sign-box">
+    <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:4px">
+     <span style="font-weight:600">Bill By:</span>
+     <input id="billBy" value="" placeholder="Name" style="width:130px;text-align:left;font-weight:500">
+    </div>
+    <input id="signCompany" value="For Krizz Mart Private Limited" style="font-weight:700;text-align:center"><br><br>
+    <strong style="color:#0f172a">Authorised Signatory</strong>
+   </div>
+  </div>
+
+ </div>
+</div>
+
+<input type="file" id="excelFile" accept=".xlsx,.xls,.csv" hidden onchange="importExcel(event)">
+
+<script>
+const $ = id => document.getElementById(id);
+
+function copyBillToShip(){
+  $('shipName').value = $('billName').value;
+  $('shipAddress').value = $('billAddress').value;
+  $('shipGST').value = $('billGST').value;
+  showStatus('Copied Bill To → Ship To');
+}
+
+function copyShipToBill(){
+  $('billName').value = $('shipName').value;
+  $('billAddress').value = $('shipAddress').value;
+  $('billGST').value = $('shipGST').value;
+  showStatus('Copied Ship To → Bill To');
+}
+
+function showStatus(msg){
+  $('statusMsg').textContent = msg;
+  setTimeout(()=>{ if($('statusMsg').textContent === msg) $('statusMsg').textContent = ''; }, 3500);
+}
+
+function addRow(item={}){
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+  <td class="center sr"></td>
+  <td>
+   <input class="pname" value="${esc(item.name ?? 'MENS FORMAL SHIRTS')}" style="font-weight:600;margin-bottom:3px" placeholder="Product Name">
+   <input class="sku" value="${esc(item.sku ?? '')}" style="font-size:10px;color:#475569" placeholder="SKU / Product Code">
+  </td>
+  <td class="center"><input class="hsn" value="${esc(item.hsn ?? '62052000')}" style="text-align:center;font-weight:500"></td>
+  <td class="center"><input class="qty" type="number" min="0" step="1" value="${item.qty ?? 1}" style="text-align:center;font-weight:600" oninput="calc()"></td>
+  <td class="num"><input class="rate" type="number" min="0" step=".01" value="${item.rate ?? 0}" style="text-align:right;font-weight:600" oninput="calc()"></td>
+  <td class="num taxable" style="font-weight:600">0.00</td>
+  <td class="center"><input class="gst" type="number" min="0" step=".1" value="${item.gst ?? 5}" style="text-align:center;font-weight:600" oninput="calc()"></td>
+  <td class="center igstCell" style="font-weight:500">0.00<br>(5.0%)</td>
+  <td class="num amount" style="font-weight:700">0.00</td>
+  <td class="no-print center"><button type="button" onclick="this.closest('tr').remove();calc()" style="background:#fee2e2;color:#991b1b;border:0;border-radius:4px;padding:4px 8px;cursor:pointer;font-weight:700">&times;</button></td>
+  `;
+  $('itemBody').appendChild(tr);
+  calc();
+}
+
+function esc(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+function calc(){
+  let totQty = 0, totTaxable = 0, totIgst = 0, totAmt = 0;
+  [...$('itemBody').rows].forEach((r, idx) => {
+    r.querySelector('.sr').textContent = idx + 1;
+    let q = parseFloat(r.querySelector('.qty').value) || 0;
+    let rate = parseFloat(r.querySelector('.rate').value) || 0;
+    let gst = parseFloat(r.querySelector('.gst').value);
+    if(isNaN(gst)) gst = 5;
+
+    let taxable = q * rate;
+    let igst = taxable * (gst / 100);
+    let amount = taxable + igst;
+
+    totQty += q;
+    totTaxable += taxable;
+    totIgst += igst;
+    totAmt += amount;
+
+    r.querySelector('.taxable').textContent = taxable.toFixed(2);
+    r.querySelector('.igstCell').innerHTML = `${igst.toFixed(2)}<br>(${gst.toFixed(1)}%)`;
+    r.querySelector('.amount').textContent = amount.toFixed(2);
+  });
+
+  $('totalQty').textContent = totQty;
+  $('taxableTotal').textContent = totTaxable.toFixed(2);
+  $('igstTotal').textContent = totIgst.toFixed(2);
+  $('grandTotal').textContent = totAmt.toFixed(2);
+
+  let rupees = Math.floor(totAmt + 1e-6);
+  let paise = Math.round((totAmt - rupees) * 100);
+  if(paise === 100){ rupees += 1; paise = 0; }
+  let words = 'INR ' + numberWords(rupees) + ' Rupees';
+  if(paise > 0) words += ' and ' + numberWords(paise) + ' Paise';
+  words += ' Only';
+  $('amountWords').textContent = words;
+}
+
+function numberWords(n){
+  if(n === 0) return 'Zero';
+  let a = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'],
+      b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+  function two(x){ return x < 20 ? a[x] : b[Math.floor(x/10)] + (x % 10 ? ' ' + a[x % 10] : ''); }
+  function under(x){ let s = ''; if(x >= 100){ s += a[Math.floor(x/100)] + ' Hundred '; x %= 100; } return s + two(x); }
+  let out = '';
+  if(n >= 10000000){ out += under(Math.floor(n/10000000)) + ' Crore '; n %= 10000000; }
+  if(n >= 100000){ out += under(Math.floor(n/100000)) + ' Lakh '; n %= 100000; }
+  if(n >= 1000){ out += under(Math.floor(n/1000)) + ' Thousand '; n %= 1000; }
+  if(n) out += under(n);
+  return out.trim();
+}
+
+function normKey(k){ return String(k || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+function pickCol(rowMap, candidates){
+  for(const c of candidates){ if(rowMap[c] !== undefined && rowMap[c] !== '') return rowMap[c]; }
+  return '';
+}
+
+function inferProductName(sellerSku, explicitName){
+  if(explicitName) return String(explicitName).trim();
+  const s = String(sellerSku || '').toUpperCase();
+  if(s.includes('SHRT') || s.includes('FS_') || s.includes('FS-') || s.includes('HS_') || s.includes('HS-')) return 'MENS FORMAL SHIRTS';
+  return sellerSku ? String(sellerSku).trim() : 'MENS FORMAL SHIRTS';
+}
+
+function handleExcelFile(file){
+  if(!file) return;
+  if(typeof XLSX === 'undefined'){ alert('Excel parser not loaded.'); return; }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+      if(!rows.length){ alert('No data in Excel'); return; }
+
+      let parsed = [];
+      let poBarcode = '';
+      let sellerGst = '';
+
+      rows.forEach(r => {
+        let map = {};
+        Object.keys(r).forEach(k => map[normKey(k)] = r[k]);
+
+        let po = pickCol(map, ['pobarcodestrbarcode','pobarcode','strbarcode','orderno','ordernumber']);
+        if(po && !poBarcode) poBarcode = String(po).trim();
+
+        let gstin = pickCol(map, ['vendorgstregistrationno','vendorgst','sellergst','gstin']);
+        if(gstin && !sellerGst) sellerGst = String(gstin).trim();
+
+        let skuCode = pickCol(map, ['skucode','sku','barcode','itemcode']);
+        let sellerSku = pickCol(map, ['sellersku','stylecode','article']);
+        let explicitName = pickCol(map, ['productname','itemname','description','particulars']);
+        let hsn = pickCol(map, ['hsncode','hsn']) || '62052000';
+        let q = parseFloat(pickCol(map, ['quantity','qty'])) || 0;
+        let rate = parseFloat(pickCol(map, ['rate','unitprice','price'])) || 0;
+        let amt = parseFloat(pickCol(map, ['amount','taxablevalue'])) || (q * rate);
+        let igst = parseFloat(pickCol(map, ['igst','igstamount']));
+        let gstPct = parseFloat(pickCol(map, ['gst','gstpercent','taxrate']));
+
+        if(!skuCode && !sellerSku && !explicitName && q === 0) return;
+
+        if(isNaN(gstPct)){
+          gstPct = (!isNaN(igst) && amt > 0) ? Math.round((igst / amt) * 1000) / 10 : 5;
+        }
+
+        let prodName = inferProductName(sellerSku, explicitName);
+        let displaySku = sellerSku && skuCode && sellerSku !== skuCode
+          ? `${sellerSku} (${skuCode})`
+          : (sellerSku || skuCode || '');
+
+        parsed.push({name: prodName, sku: displaySku, hsn: String(hsn), qty: q, rate: rate, gst: gstPct});
+      });
+
+      if(!parsed.length){ alert('No valid product rows found in Excel.'); return; }
+
+      $('itemBody').innerHTML = '';
+      parsed.forEach(addRow);
+      if(poBarcode){ $('orderNo').value = poBarcode; $('shipRef').value = poBarcode; }
+      if(sellerGst) $('sellerGST').value = sellerGst;
+      calc();
+      showStatus(`Imported ${parsed.length} rows from "${file.name}" ✓`);
+    } catch(err){ alert('Error reading Excel: '+err.message); }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function importExcel(e){ handleExcelFile(e.target.files[0]); e.target.value = ''; }
+
+function exportExcel(){
+  if(typeof XLSX === 'undefined'){ alert('Excel library not loaded.'); return; }
+  let data = [...$('itemBody').rows].map((r, i)=>({
+    'Sr No': i + 1,
+    'Product Name': r.querySelector('.pname').value,
+    'SKU Code': r.querySelector('.sku').value,
+    'HSN Code': r.querySelector('.hsn').value,
+    'Quantity': r.querySelector('.qty').value,
+    'Rate': r.querySelector('.rate').value,
+    'Taxable Value': r.querySelector('.taxable').textContent,
+    'GST %': r.querySelector('.gst').value,
+    'Amount': r.querySelector('.amount').textContent
+  }));
+  let ws = XLSX.utils.json_to_sheet(data);
+  let wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'TaxInvoice');
+  const fname = ($('docNo').value || 'Tax_Invoice_KrizzMart').replace(/[\/:*?"<>|]/g, '_') + '.xlsx';
+  XLSX.writeFile(wb, fname);
+}
+
+function clearRows(){
+  $('itemBody').innerHTML = '';
+  calc();
+}
+
+function getFormData(){
+  const fields = ['docTitle','sellerName','sellerAddress','sellerGST','docNo','docDate','orderNo','orderDate','portal','payment','dispatch','awb','pos','billName','billAddress','billGST','shipRef','shipName','shipAddress','shipGST','reverseCharge','declarationText','footerNote','billBy','signCompany'];
+  const d = {};
+  fields.forEach(f => { if($(f)) d[f] = $(f).value; });
+  d.items = [...$('itemBody').rows].map(r => ({
+    name: r.querySelector('.pname').value,
+    sku: r.querySelector('.sku').value,
+    hsn: r.querySelector('.hsn').value,
+    qty: r.querySelector('.qty').value,
+    rate: r.querySelector('.rate').value,
+    gst: r.querySelector('.gst').value
+  }));
+  return d;
+}
+
+function loadFormData(d){
+  Object.keys(d).forEach(k => { if(k !== 'items' && $(k)) $(k).value = d[k]; });
+  $('itemBody').innerHTML = '';
+  (d.items || []).forEach(addRow);
+  calc();
+}
+
+function saveDraft(){
+  localStorage.setItem('krizzPoppinsInvoiceDraft', JSON.stringify(getFormData()));
+  showStatus('Draft saved in browser ✓');
+}
+
+function resetForm(){
+  if(!confirm('Reset all fields and start a blank invoice?')) return;
+  localStorage.removeItem('krizzPoppinsInvoiceDraft');
+  location.reload();
+}
+
+window.onload = function(){
+  const saved = localStorage.getItem('krizzPoppinsInvoiceDraft');
+  if(saved){
+    try{ loadFormData(JSON.parse(saved)); return; }catch(e){}
+  }
+  addRow({name:'MENS FORMAL SHIRTS', sku:'AW26133BKFS_L', hsn:'62052000', qty:4, rate:359.00, gst:5});
+  addRow({name:'MENS FORMAL SHIRTS', sku:'AW26133BKFS_M', hsn:'62052000', qty:4, rate:359.00, gst:5});
+  addRow({name:'MENS FORMAL SHIRTS', sku:'AW26133BKFS_S', hsn:'62052000', qty:2, rate:359.00, gst:5});
+};
+</script>
+</body>
+</html>
